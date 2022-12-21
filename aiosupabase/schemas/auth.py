@@ -167,6 +167,18 @@ class SupabaseAuthClient:
             )
         return self._async_client
 
+    def _validate_jwt(
+        self,
+        jwt: Optional[str] = None,
+    ) -> str:
+        """
+        Validates the JWT - if provided
+        """
+        if jwt is not None: return jwt
+        if self.session and self.session.access_token:
+            return self.session.access_token
+        return self.settings.key
+
     """
     SyncGoTrueClient | AsyncGoTrueClient 
     Methods
@@ -1397,7 +1409,7 @@ class SupabaseAuthClient:
             redirect_to=redirect_to,
         )
     
-    def sign_out(self, *, jwt: str) -> None:
+    def sign_out(self, *, jwt: Optional[str] = None) -> None:
         """Removes a logged-in session.
 
         Parameters
@@ -1405,10 +1417,10 @@ class SupabaseAuthClient:
         jwt : str
             A valid, logged-in JWT.
         """
-        return self.sync_api.sign_out(jwt=jwt)
+        return self.sync_api.sign_out(jwt=self._validate_jwt(jwt))
 
     
-    async def async_sign_out(self, *, jwt: str) -> None:
+    async def async_sign_out(self, *, jwt: Optional[str] = None) -> None:
         """Removes a logged-in session.
 
         Parameters
@@ -1416,7 +1428,7 @@ class SupabaseAuthClient:
         jwt : str
             A valid, logged-in JWT.
         """
-        return await self.async_api.sign_out(jwt=jwt)
+        return await self.async_api.sign_out(jwt=self._validate_jwt(jwt))
     
 
     def get_url_for_provider(
@@ -1487,7 +1499,7 @@ class SupabaseAuthClient:
             scopes=scopes,
         )
     
-    def get_user(self, *, jwt: str) -> User:
+    def get_user(self, *, jwt: Optional[str] = None) -> User:
         """Gets the user details.
 
         Parameters
@@ -1505,9 +1517,9 @@ class SupabaseAuthClient:
         error : APIError
             If an error occurs
         """
-        return self.sync_api.get_user(jwt=jwt)
+        return self.sync_api.get_user(jwt=self._validate_jwt(jwt))
     
-    async def async_get_user(self, *, jwt: str) -> User:
+    async def async_get_user(self, *, jwt: Optional[str] = None) -> User:
         """Gets the user details.
 
         Parameters
@@ -1525,13 +1537,13 @@ class SupabaseAuthClient:
         error : APIError
             If an error occurs
         """
-        return await self.async_api.get_user(jwt=jwt)
+        return await self.async_api.get_user(jwt=self._validate_jwt(jwt))
     
     def update_user(
         self,
         *,
-        jwt: str,
-        attributes: UserAttributes,
+        attributes: Union[UserAttributes, Dict],
+        jwt: Optional[str] = None,
     ) -> User:
         """
         Updates the user data.
@@ -1553,13 +1565,15 @@ class SupabaseAuthClient:
         error : APIError
             If an error occurs
         """
-        return self.sync_api.update_user(jwt=jwt, attributes=attributes)
+        if isinstance(attributes, dict):
+            attributes = UserAttributes(**attributes)
+        return self.sync_api.update_user(jwt=self._validate_jwt(jwt), attributes=attributes)
     
     async def async_update_user(
         self,
         *,
-        jwt: str,
-        attributes: UserAttributes,
+        attributes: Union[UserAttributes, Dict],
+        jwt: Optional[str] = None,
     ) -> User:
         """
         Updates the user data.
@@ -1581,9 +1595,11 @@ class SupabaseAuthClient:
         error : APIError
             If an error occurs
         """
-        return await self.async_api.update_user(jwt=jwt, attributes=attributes)
+        if isinstance(attributes, dict):
+            attributes = UserAttributes(**attributes)
+        return await self.async_api.update_user(jwt=self._validate_jwt(jwt), attributes=attributes)
 
-    def delete_user(self, *, uid: str, jwt: str) -> None:
+    def delete_user(self, *, uid: str, jwt: Optional[str] = None) -> None:
         """Delete a user. Requires a `service_role` key.
 
         This function should only be called on a server.
@@ -1608,11 +1624,11 @@ class SupabaseAuthClient:
         """
         return self.sync_api.delete_user(
             uid=uid,
-            jwt=jwt,
+            jwt=self._validate_jwt(jwt),
         )
         
 
-    async def async_delete_user(self, *, uid: str, jwt: str) -> None:
+    async def async_delete_user(self, *, uid: str, jwt: Optional[str] = None) -> None:
         """Delete a user. Requires a `service_role` key.
 
         This function should only be called on a server.
@@ -1637,7 +1653,7 @@ class SupabaseAuthClient:
         """
         return await self.async_api.delete_user(
             uid=uid,
-            jwt=jwt,
+            jwt=self._validate_jwt(jwt),
         )
 
     def refresh_access_token(self, *, refresh_token: str) -> Session:
