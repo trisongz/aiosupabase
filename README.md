@@ -1,152 +1,110 @@
-# supabase-py
+# aiosupabase
+ Unofficial Asyncronous Python Client for Supabase
 
-[![Tests](https://github.com/supabase/supabase-py/actions/workflows/ci-python.yml/badge.svg)](https://github.com/supabase/supabase-py/actions)
-[![PYPI Version](https://badge.fury.io/py/supabase-py.svg)](https://badge.fury.io/py/supabase-py)
-[![Documentation Status](https://readthedocs.org/projects/supabase/badge/?version=latest)](https://supabase.readthedocs.io/en/latest/?badge=latest)
+ **Latest Version**: [![PyPI version](https://badge.fury.io/py/aiosupabase.svg)](https://badge.fury.io/py/aiosupabase)
 
-Supabase client for Python. This mirrors the design of [supabase-js](https://github.com/supabase/supabase-js/blob/master/README.md)
 
-## Status
 
-- [x] Alpha: We are testing Supabase with a closed set of customers
-- [x] Public Alpha: Anyone can sign up over at [app.supabase.io](https://app.supabase.io). But go easy on us, there are a few kinks.
-- [ ] Public Beta: Stable enough for most non-enterprise use-cases
-- [ ] Public: Production-ready
+## Features
 
-We are currently in Public Alpha. Watch "releases" of this repo to get notified of major updates.
+- Unified Asyncronous and Syncronous Python Client for [Supabase](https://supabase.com/)
+- Supports Python 3.6+
+- Strongly Typed with [Pydantic](https://pydantic-docs.helpmanual.io/)
+- Utilizes Environment Variables for Configuration
 
-<kbd><img src="https://gitcdn.link/repo/supabase/supabase/master/web/static/watch-repo.gif" alt="Watch this repo"/></kbd>
+## APIs
+
+Both async and sync Apis are available for the following
+
+- [x] Auth
+- [x] Postgrest
+- [x] Storage
+- [x] Realtime
+- [x] Functions
+
+---
 
 ## Installation
 
-**Recomended:** First activate your virtual environment, with your favourites system. For example, we like `poetry` and `conda`!
-
-#### PyPi installation
-
-Now install the package. (for > Python 3.7)
-
 ```bash
-pip install supabase-py
-```
+# Install from PyPI
+pip install aiosupabase
 
-#### Local installation
-
-You can also installing from after cloning this repo. Install like below to install in Development Mode, which means when you edit the source code the changes will be reflected in your python module.
-
-```bash
-pip install -e .
+# Install from source
+pip install git+https://github.com/trisongz/aiosupabase.git
 ```
 
 ## Usage
 
-It's usually best practice to set your api key environment variables in some way that version control doesn't track them, e.g don't put them in your python modules! Set the key and url for the supabase instance in the shell, or better yet, use a dotenv file. Heres how to set the variables in the shell.
-
-```bash
-export SUPABASE_URL="my-url-to-my-awesome-supabase-instance"
-export SUPABASE_KEY="my-supa-dupa-secret-supabase-api-key"
-```
-
-We can then read the keys in the python source code.
+Example Usage
 
 ```python
-import os
-from supabase_py import create_client, Client
+import asyncio
+from aiosupabase import Supabase
+from aiosupabase.utils import logger
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+"""
+Environment Vars that map to Supabase.configure:
+all vars are prefixed with SUPABASE_
+
+SUPABASE_URL (url): str   | Supabase URL
+SUPABASE_KEY (key): str   | API Key
+SUPABASE_DEBUG_ENABLED (debug_enabled): bool - defaults to False
+
+SUPABASE_CLIENT_SCHEMA (client_schema): str - defaults to 'public'
+SUPABASE_HEADERS (headers): Dict - defaults to {}
+SUPABASE_AUTO_REFRESH_TOKENS (auto_refresh_tokens): bool - defaults to True
+SUPABASE_PERSIST_SESSION (persist_session): bool - defaults to True
+SUPABASE_REALTIME_CONFIG (realtime_config): Dict - defaults to None
+SUPABASE_TIMEOUT (timeout): int - defaults to 5 [DEFAULT_POSTGREST_CLIENT_TIMEOUT]
+
+SUPABASE_COOKIE_OPTIONS (cookie_options): Dict - defaults to None
+SUPABASE_REPLACE_DEFAULT_HEADERS (replace_default_headers): bool - defaults to False
+
+"""
+
+Supabase.configure(
+    url = '...',
+    key = "...",
+    debug_enabled = True,
+)
+
+async def async_fetch_table(table: str = "profiles", select: str = "*"):
+    # Async fetch
+    # note that table is `atable` for async
+    return await Supabase.atable(table).select(select).execute()
+
+def fetch_table(table: str = "profiles", select: str = "*"):
+    # Sync fetch
+    return Supabase.table(table).select(select).execute()
+
+async def async_fetch_users():
+    # Async `ListUsers`
+    # note that most async methods are prefixed with
+    # `async_` 
+    return await Supabase.auth.async_list_users()
+
+def fetch_users():
+    # Sync `ListUsers`
+    # note that most async methods are prefixed with
+    return Supabase.auth.list_users()
+
+async def run_test():
+    # Async fetch
+    async_data = await async_fetch_table()
+    logger.info(f"async_data: {async_data}")
+
+    async_users = await async_fetch_users()
+    logger.info(f"async_users: {async_users}")
+
+    # Sync fetch
+    sync_data = fetch_table()
+    logger.info(f"sync_data: {sync_data}")
+
+    sync_users = fetch_users()
+    logger.info(f"sync_users: {sync_users}")
+
+
+asyncio.run(run_test())
+
 ```
-
-Use the supabase client to interface with your database.
-
-### Running Tests
-
-Currently the test suites are in a state of flux. We are expanding our clients tests to ensure things are working, and for now can connect to this test instance, that is populated with the following table:
-
-<p align="center">
-  <img width="720" height="481" src="https://i.ibb.co/Bq7Kdty/db.png">
-</p>
-
-The above test database is a blank supabase instance that has populated the `countries` table with the built in countries script that can be found in the supabase UI. You can launch the test scripts and point to the above test database by running
-
-```bash
-./test.sh
-```
-
-### See issues for what to work on
-
-Rough roadmap:
-
-- [ ] Wrap [Postgrest-py](https://github.com/supabase/postgrest-py/)
-- [ ] Wrap [Realtime-py](https://github.com/supabase/realtime-py)
-- [x] Wrap [Gotrue-py](https://github.com/J0/gotrue-py)
-
-### Client Library
-
-This is a sample of how you'd use supabase-py. Functions and tests are WIP
-
-## Authenticate
-
-```python
-from supabase_py import create_client, Client
-
-url: str = os.environ.get("SUPABASE_TEST_URL")
-key: str = os.environ.get("SUPABASE_TEST_KEY")
-supabase: Client = create_client(url, key)
-# Create a random user login email and password.
-random_email: str = "3hf82fijf92@supamail.com"
-random_password: str = "fqj13bnf2hiu23h"
-user = supabase.auth.sign_up(email=random_email, password=random_password)
-```
-
-## Sign-in
-
-```python
-from supabase_py import create_client, Client
-
-url: str = os.environ.get("SUPABASE_TEST_URL")
-key: str = os.environ.get("SUPABASE_TEST_KEY")
-supabase: Client = create_client(url, key)
-# Sign in using the user email and password.
-random_email: str = "3hf82fijf92@supamail.com"
-random_password: str = "fqj13bnf2hiu23h"
-user = supabase.auth.sign_in(email=random_email, password=random_password)
-```
-
-## Managing Data
-
-#### Insertion of Data
-
-```python
-from supabase_py import create_client, Client
-
-url: str = os.environ.get("SUPABASE_TEST_URL")
-key: str = os.environ.get("SUPABASE_TEST_KEY")
-supabase: Client = create_client(url, key)
-data = supabase.table("countries").insert({"name":"Germany"}).execute()
-assert len(data.get("data", [])) > 0
-```
-
-#### Selection of Data
-
-```python
-from supabase_py import create_client, Client
-
-url: str = os.environ.get("SUPABASE_TEST_URL")
-key: str = os.environ.get("SUPABASE_TEST_KEY")
-supabase: Client = create_client(url, key)
-data = supabase.table("countries").select("*").execute()
-# Assert we pulled real data.
-assert len(data.get("data", [])) > 0
-```
-
-## Realtime Changes
-
-```python
-subscription = supabase
-  .table('countries')
-  .on('*',  lambda x: print(x))
-  .subscribe()
-```
-
-See [Supabase Docs](https://supabase.io/docs/guides/client-libraries) for full list of examples
