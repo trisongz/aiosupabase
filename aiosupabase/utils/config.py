@@ -4,8 +4,20 @@ from typing import Optional, Dict, Union, Any
 
 from lazyops.types import validator, BaseSettings, lazyproperty
 from aiosupabase.version import VERSION
-from postgrest.constants import DEFAULT_POSTGREST_CLIENT_TIMEOUT
-from gotrue.constants import COOKIE_OPTIONS
+
+DEFAULT_POSTGREST_CLIENT_HEADERS = {
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
+DEFAULT_POSTGREST_CLIENT_TIMEOUT = 5
+COOKIE_OPTIONS = {
+    "name": "sb:token",
+    "lifetime": 60 * 60 * 8,
+    "domain": "",
+    "path": "/",
+    "same_site": "lax",
+}
+
 
 from aiosupabase.types.errors import SupabaseException
 
