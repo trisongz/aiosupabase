@@ -14,10 +14,10 @@ version = root.joinpath(f'{pkg_name}/version.py').read_text().split('VERSION = '
 requirements = [
     'aiohttpx',
     'lazyops',
-    'postgrest-py',
-    'gotrue',
-    'realtime',
-    'storage3',
+    'postgrest-py==0.10.3',
+    'gotrue==0.5.4',
+    'realtime==0.0.5',
+    'storage3==0.3.5',
 ]
 
 if sys.version_info.minor < 8:
